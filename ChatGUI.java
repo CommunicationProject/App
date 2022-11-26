@@ -149,7 +149,7 @@ public class ChatGUI extends javax.swing.JFrame {
 
     private void buttonOpenChatActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonOpenChatActionPerformed
         // TODO add your handling code here:
-
+        Client client = new Client();
     }//GEN-LAST:event_buttonOpenChatActionPerformed
 
     private void buttonLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLogoutActionPerformed
