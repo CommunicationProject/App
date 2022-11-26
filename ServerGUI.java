@@ -63,7 +63,9 @@ public class ServerGUI extends javax.swing.JFrame {
 
     private void buttonStartServerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonStartServerActionPerformed
         // TODO add your handling code here:
-        
+        Server server = new Server();
+        ClientHandler handler = new ClientHandler();
+        handler.run();
     }//GEN-LAST:event_buttonStartServerActionPerformed
 
     
