@@ -136,6 +136,7 @@ public class GroupChatGUI extends javax.swing.JFrame {
 
     private void buttonOpenGroupActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonOpenGroupActionPerformed
         // TODO add your handling code here:
+        Client client = new Client();
     }//GEN-LAST:event_buttonOpenGroupActionPerformed
 
     private void buttonLogoutActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonLogoutActionPerformed
