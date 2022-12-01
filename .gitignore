@@ -37,3 +37,14 @@
 /ServerGUI.class
 /User.class
 /Server$ClientHandler.class
+/ChatMessage.class
+/Client$Listener.class
+/Server$Handler.class
+/Client$Handler.class
+/Client$1.class
+/PracticeClient.class
+/SimpleGUI.class
+/ServerListener.class
+/SimpleServer.class
+/ClientHandler.class
+/SimpleGUI$1.class

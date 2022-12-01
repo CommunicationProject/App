@@ -1,5 +1,32 @@
+import java.net.ServerSocket;
+import javax.swing.JOptionPane;
 
 public class ServerGUI extends javax.swing.JFrame {
+
+    private ServerSocket server = null;
+    private int port = 7777;
+    
+    public ServerSocket getServer() {
+        return server;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public void startServer() {
+        try {
+            if (server != null) {
+                JOptionPane.showMessageDialog(null, "Server already started");
+                return;
+            }
+            server = new ServerSocket(port);
+            server.setReuseAddress(true);
+            JOptionPane.showMessageDialog(null, "Server started");
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Server cannot start, maybe port already in used by some other process");
+        }
+    }
 
     /**
      * Creates new form ServerGUI
@@ -8,6 +35,8 @@ public class ServerGUI extends javax.swing.JFrame {
         initComponents();
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
     }
+
+    
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -63,10 +92,9 @@ public class ServerGUI extends javax.swing.JFrame {
 
     private void buttonStartServerActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonStartServerActionPerformed
         // TODO add your handling code here:
-        
+        startServer();
     }//GEN-LAST:event_buttonStartServerActionPerformed
 
-    
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton buttonStartServer;

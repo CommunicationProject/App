@@ -1,69 +1,104 @@
-import java.io.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import java.net.Socket;
-import java.util.Scanner;
 
-class Client {
+public class Client extends JFrame implements ActionListener {
 
-    public static void main(String[] args) {
+    private String screenName;
 
-        Scanner sc = new Scanner(System.in); //System.in is a standard input stream.
-        System.out.print("Enter the port number to connect to: <7777>");
-        int port = sc.nextInt();
-        System.out.print("Enter the host address to connect to: <localhost> ");
-        String host = sc.next();
-        sc.nextLine();
+    // GUI stuff
+    private JTextArea  enteredText = new JTextArea(10, 32);
+    private JTextField typedText   = new JTextField(32);
 
+    // socket for connection to chat server
+    private Socket socket;
+    private BufferedReader in;
+	private PrintWriter out;
+
+    // for writing to and reading from the server
+    
+
+    public Client(String screenName, String hostName) {
+
+        // connect to server
         try {
-            // Connect to the ServerSocket at host:port
-            Socket socket = new Socket(host, port);
-            System.out.println("Connected to " + host + ":" + port);
+            socket = new Socket(hostName, 4444);
+       	    out = new PrintWriter(socket.getOutputStream(), true);
+		    in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        }
+        catch (Exception ex) { ex.printStackTrace(); }
+        this.screenName = screenName;
 
-            // Output stream socket.
-            OutputStream outputStream = socket.getOutputStream();
-
-            // Create object output stream from the output stream to send an object through it
-            ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
-
-            InputStream inputStream = socket.getInputStream();
-
-            ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
-
-            Message msg = new Message("login", "", "");
-            objectOutputStream.writeObject(msg);
-            msg = (Message) objectInputStream.readObject();
-            if (msg != null) {
-                System.out.println(msg.getType() + " " + msg.getStatus());
-                if ("login".equalsIgnoreCase(msg.getType()) && "success".equalsIgnoreCase(msg.getStatus())) {
-                    boolean running = true;
-                    while (running) {
-                        System.out.print("Enter text to send to the server: ");
-                        String text = sc.nextLine();
-                        if ("logout".equalsIgnoreCase(text)) {
-                            msg = new Message("logout", "", "");
-                            objectOutputStream.writeObject(msg);
-                        } else {
-                            msg = new Message("text", "", text);
-                            objectOutputStream.writeObject(msg);
-                        }
-                        msg = (Message) objectInputStream.readObject();
-                        if (msg != null) {
-                            if ("logout".equalsIgnoreCase(msg.getType()) && "success".equalsIgnoreCase(msg.getStatus())) {
-                                System.out.println(msg.getType() + " " + msg.getStatus());
-                                running = false;
-                            } else {
-                                System.out.println("Server replied: " + msg.getText());
-                            }
-                        }
-                    }
-                    System.out.println("Closing socket");
-                    socket.close();
-                    sc.close();
+        // close output stream  - this will cause listen() to stop and exit
+        addWindowListener(
+            new WindowAdapter() {
+                public void windowClosing(WindowEvent e) {
+                    out.close();
+//                    in.close();
+//                    try                   { socket.close();        }
+//                    catch (Exception ioe) { ioe.printStackTrace(); }
                 }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ClassNotFoundException ex) {
-            ex.printStackTrace();
+        );
+
+
+        // create GUI stuff
+        enteredText.setEditable(false);
+        enteredText.setBackground(Color.LIGHT_GRAY);
+        typedText.addActionListener(this);
+
+        Container content = getContentPane();
+        content.add(new JScrollPane(enteredText), BorderLayout.CENTER);
+        content.add(typedText, BorderLayout.SOUTH);
+
+
+        // display the window, with focus on typing box
+        setTitle("Room [" + screenName + "]");
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        pack();
+        typedText.requestFocusInWindow();
+        setVisible(true);
+
+    }
+
+    // TextField for sending the messages
+    public void actionPerformed(ActionEvent e) {
+        out.println("[" + screenName + "]: " + typedText.getText());
+        typedText.setText("");
+        typedText.requestFocusInWindow();
+    }
+
+    //to listen from socket in order to broadcast
+    public void listen() throws IOException {
+        String s;
+        while ((s = in.readLine()) != null) {
+            enteredText.insert(s + "\n", enteredText.getText().length());
+            enteredText.setCaretPosition(enteredText.getText().length());
         }
+        out.close();
+        in.close();
+        try { 
+        	socket.close();      
+        	}
+        catch (Exception ex) {
+        
+        ex.printStackTrace();
+        System.exit(1);
+        }
+        
+    }
+
+    public static void main(String[] args) throws IOException  {
+        Client client = new Client("miguel","localhost");
+        client.listen();
     }
 }

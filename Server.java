@@ -1,101 +1,148 @@
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-class Server {
-
-    public static void main(String[] args) {
-        ServerSocket server = null;
-        int port = 7777;
-        try {
-            server = new ServerSocket(port);
-            server.setReuseAddress(true);
-            System.out.println("ServerSocket awaiting connections...");
-            boolean running = true;
-            while (running) {
-                Socket client = server.accept();
-                ClientHandler clientSocket = new ClientHandler();
-                clientSocket.socket = client;
-                System.out.println("Connection start: " + client);
-                Thread thread = new Thread(clientSocket);
-                thread.start();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (server != null) {
-                try {
-                    server.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-    private static class ClientHandler implements Runnable {
-
-        Socket socket;
-
-        public void run() {
-
-            ObjectOutputStream objectOutputStream = null;
-            ObjectInputStream objectInputStream = null;
-
-            try {
-                // get the outputstream of client
-                OutputStream outputStream = socket.getOutputStream();
-                objectOutputStream = new ObjectOutputStream(outputStream);
-
-                // get the inputstream of client
-                InputStream inputStream = socket.getInputStream();
-                objectInputStream = new ObjectInputStream(inputStream);
-
-                Message msg = null;
-                // loop until login message not received
-                boolean running = true;
-                while (running) {
-                    msg = (Message) objectInputStream.readObject();
-                    if (msg != null && "login".equalsIgnoreCase(msg.getType())) {
-                        running = false;
-                    }
-                }
-                msg.setStatus("success");
-                objectOutputStream.writeObject(msg);
-
-                running = true;
-                while (running) {
-                    msg = (Message) objectInputStream.readObject();
-                    if (msg != null) {
-                        // writing the received message from client
-                        if (msg.getType().equalsIgnoreCase("logout")) {
-                            msg.setStatus("success");
-                            objectOutputStream.writeObject(msg);
-                            running = false;
-                        } else {
-                            msg.setText(msg.getText().toUpperCase());
-                            objectOutputStream.writeObject(msg);
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException ex) {
-                ex.printStackTrace();
-            } finally {
-                try {
-                    if (objectOutputStream != null) {
-                        objectOutputStream.close();
-                    }
-                    if (objectInputStream != null) {
-                        objectInputStream.close();
-                        socket.close();
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            System.out.println("Connection close: " + socket);
-        }
-    }
+public class Server implements Runnable {
+	
+	 private ArrayList<ClientHandler> connections;
+	 private ServerSocket server;
+	 private boolean done;
+	 //thread pool for handling multithreadding
+	 private ExecutorService threads;
+	 
+	 //to initialize the array list
+	 public Server() {
+		 connections = new ArrayList<>();
+		 done = false;
+	 }
+	 
+	 @Override
+	 public void run() {
+		 try {
+			server = new ServerSocket(9999);
+			threads = Executors.newCachedThreadPool();
+			//listen to connections at all times
+			while (!done) {
+				Socket client = server.accept();
+				ClientHandler handler = new ClientHandler(client);
+				connections.add(handler);
+				//executes new thread on the handler
+				threads.execute(handler);
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		 
+	 }
+	 //display message to all the clients
+	 public void broadcast(String message) {
+		 // for each client in connections
+		 for (ClientHandler ch: connections) {
+			 if (ch != null) {
+				 ch.sendMessage(message);
+			 }
+		 }
+	 }
+	 
+	 //function to shut down server
+	 public void shutdown() {
+		 done = true;
+		 try {
+			 if (!server.isClosed()) {
+				 server.close();
+			} 
+			 
+			 //close each individual connection
+			 for (ClientHandler ch: connections) {
+				 ch.shutdown();
+			 }
+		 } catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+	 }
+	 
+	 //handles the  client connection
+	 class ClientHandler implements Runnable {
+		 private Socket client;
+		 private BufferedReader in;
+		 private PrintWriter out;
+		 private String nickname;
+		 
+		 public ClientHandler(Socket client) {
+			 this.client = client;
+		 }
+		 @Override
+		 public void run() {
+			 try {
+				 out = new PrintWriter(client.getOutputStream(), true);
+				 in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+				 
+				 //send message to client here
+				 out.println("Please enter a name for your client: ");
+				 nickname = in.readLine();
+				 
+				 //show who connected to server
+				 System.out.print(nickname + " connected!");
+				 //send message to all the clients that someone joined the chat
+				 broadcast(nickname + " joined the chat!");
+				 
+				 //process message and complete commands based on message
+				 String message;
+				 while ((message = in.readLine()) != null) {
+					 if (message.startsWith("/nick")) {
+						 
+					 }
+					 else if (message.startsWith("/quit")) {
+						 
+					 }
+					 else {
+						 broadcast(nickname + ": " + message);
+					 }
+				 }
+				 
+			 } catch (IOException e) {
+				// TODO Auto-generated catch block
+					e.printStackTrace();
+			 }
+		 }
+		 
+		 //send function to send message to client via the handler
+		 public void sendMessage(String message) {
+			 out.println(message);
+		 }
+		 
+		 public void shutdown() {
+			 try {
+				in.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			 out.close();
+			 if (!client.isClosed()) {
+				 try {
+					client.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			 }
+		 }
+ 	 }
+	 
+	 //main function for testing server
+	 public static void main(String[] args) {
+		 Server server = new Server();
+		 server.run();
+		 
+	 }
+	 
 }

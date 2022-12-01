@@ -1,35 +1,25 @@
 import java.io.Serializable;
 
 public class Message implements Serializable {
-    protected String type;
-    protected String status;
-    protected String text;
-    public Message(){
-        this.type = "undf";
-        this.status = "undf";
-        this.text = "undf";
+	static final int Active = 0, Message = 1, Logout = 2, CreateGroup = 3, GroupMsg = 4;
+	//active users, message, logout, createGroup, GroupMessage
+    protected String message;
+    protected int type;
+
+    public Message(int type, String message){
+        this.message = message;
+        this.type = type;
     }
-    public Message(String type, String status, String text){
-        setType(type);
-        setStatus(status);
-        setText(text);
+
+   
+
+    String getMessage(){
+       return message;
     }
-    private void setType(String type){
-      this.type = type;
-    }
-    public void setStatus(String status){
-       this.status = status;
-    }
-    public void setText(String text){
-       this.text= text;
-    }
-    public String getType(){
+
+
+   int getType(){
        return type;
     }
-    public String getStatus(){
-     return status; 
-    }  
-  public String getText(){
-       return text;
-    }
+
 }

@@ -99,7 +99,7 @@ public class JFrameGUI extends javax.swing.JFrame {
 
     private void buttonServerGUIActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonServerGUIActionPerformed
         // TODO add your handling code here:
-        serverDisplay();
+        
     }//GEN-LAST:event_buttonServerGUIActionPerformed
 
     private void buttonUserGUIActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonUserGUIActionPerformed
